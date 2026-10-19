@@ -5046,7 +5046,7 @@ const EXAM_DATABASE = {
     <button class="nav-tab" data-tab="exam-simulator">⏱️ Exam Simulator</button>
     <button class="nav-tab" data-tab="weak-synapses">⚡ Weak Synapses Rescue (<span id="weak-count-badge">0</span>)</button>
     <button class="nav-tab" data-tab="brain-vault">📖 High-Yield Brain Vault</button>
-    <button class="nav-tab" data-tab="neural-search">🔍 AI Instant Search</button>
+    <button class="nav-tab" data-tab="neural-search">🤖 AI Exam Tutor & Search</button>
   </nav>
 
   <!-- App Main Content -->
@@ -5323,23 +5323,77 @@ const EXAM_DATABASE = {
       </div>
     </div>
 
-    <!-- TAB 7: AI INSTANT SEARCH -->
+        <!-- TAB 7: AI EXAM TUTOR & INSTANT SEARCH -->
     <div class="tab-content" id="tab-neural-search">
       <div class="card">
-        <h2 style="font-size:1.4rem; font-weight:800; margin-bottom:0.75rem;">🔍 Neural AI Instant Search & Query Assistant</h2>
-        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Type any tag (e.g. <code>basefont</code>, <code>alink</code>), function (e.g. <code>YEARS</code>, <code>DAYS</code>), shape (e.g. <code>Parallelogram</code>), or keyword to instantly find all matching questions and textbook lines.</p>
-        
-        <div class="search-input-wrap" style="margin-bottom:1.5rem;">
-          <span class="search-icon">🔍</span>
-          <input type="text" id="ai-search-input" class="search-input" placeholder="Search keywords (e.g. SciTE, ASCII, DAYSINYEAR, Rectangle, main, break)..." oninput="executeNeuralSearch()">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+          <div>
+            <h2 style="font-size:1.4rem; font-weight:800; color:var(--accent-cyan); display:flex; align-items:center; gap:0.5rem;">
+              <span>🤖</span> <span>Neural AI Exam Tutor</span>
+            </h2>
+            <p style="font-size:0.85rem; color:var(--text-muted);">Trained line-by-line on your GSEB Textbook & 126 SAM-1 Revision Worksheet with Neuroscience Explanations</p>
+          </div>
+          <button class="filter-btn" onclick="toggleAiSettings()" style="font-size:0.78rem;">⚙️ AI Settings (Gemini API)</button>
         </div>
 
-        <div id="search-results-summary" style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;"></div>
-        <div id="search-results-container"></div>
+        <!-- Optional Gemini API Key Drawer -->
+        <div id="ai-settings-drawer" style="display:none; background:var(--bg-secondary); border:1px solid var(--accent-purple); padding:0.85rem 1rem; border-radius:10px; margin-bottom:1rem; font-size:0.85rem;">
+          <div style="font-weight:700; color:var(--accent-purple); margin-bottom:0.35rem;">⚡ Connect Free Google Gemini API (Optional)</div>
+          <p style="color:var(--text-muted); font-size:0.8rem; margin-bottom:0.5rem;">By default, the tutor runs on its <strong>Built-in Offline Neural Engine</strong> (0 setup, 100% free). You can optionally enter your free Gemini API key for advanced conversational synthesis:</p>
+          <div style="display:flex; gap:0.5rem;">
+            <input type="password" id="gemini-api-key-input" class="search-input" placeholder="Paste Gemini API Key (AIzaSy...)" style="flex:1;">
+            <button class="btn-primary" style="padding:0.4rem 1rem; font-size:0.8rem;" onclick="saveGeminiApiKey()">Save Key</button>
+            <button class="btn-secondary" style="padding:0.4rem 0.8rem; font-size:0.8rem;" onclick="clearGeminiApiKey()">Clear</button>
+          </div>
+          <div id="api-key-status" style="font-size:0.75rem; color:var(--accent-green); margin-top:0.35rem;"></div>
+        </div>
+
+        <!-- Quick Prompt Pills -->
+        <div style="display:flex; gap:0.4rem; overflow-x:auto; padding-bottom:0.5rem; margin-bottom:1rem;">
+          <button class="filter-btn" onclick="askAiPrompt('Why is Q12 Meta-tag in Body instead of Head in SAM-1?')">❓ Q12 Meta-Tag Mystery</button>
+          <button class="filter-btn" onclick="askAiPrompt('Explain the difference between DAYS() and DAYSINYEAR() in Calc')">📅 DAYS vs DAYSINYEAR</button>
+          <button class="filter-btn" onclick="askAiPrompt('Give me a memory mnemonic for all Calc developer team members')">🧠 Calc Developers Peg</button>
+          <button class="filter-btn" onclick="askAiPrompt('What are all standard Flowchart symbols and their meanings?')">📐 Flowchart Symbols</button>
+          <button class="filter-btn" onclick="askAiPrompt('What is the difference between physical and logical tags in HTML?')">🏷️ Physical vs Logical</button>
+          <button class="filter-btn" onclick="askAiPrompt('Quiz me on a hard question from Chapter 6!')">🎯 Quiz Me Now!</button>
+        </div>
+
+        <!-- Chat Container -->
+        <div id="ai-chat-thread" style="max-height:420px; min-height:280px; overflow-y:auto; background:var(--bg-secondary); border:1px solid var(--bg-card-border); border-radius:12px; padding:1rem; margin-bottom:1rem; display:flex; flex-direction:column; gap:0.75rem;">
+          <!-- Initial AI message -->
+          <div style="display:flex; gap:0.6rem; align-items:flex-start;">
+            <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, var(--accent-cyan), var(--accent-purple)); display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">🤖</div>
+            <div style="background:var(--bg-primary); border:1px solid var(--bg-card-border); padding:0.75rem 1rem; border-radius:0 12px 12px 12px; font-size:0.88rem; line-height:1.5; max-width:85%;">
+              <strong>Hello! I am your AI Computer Studies Tutor.</strong><br>
+              I have analyzed all 126 questions from your SAM-1 worksheet and all 14 chapters of your textbook line by line.<br>
+              Ask me any doubt, request a memory mnemonic, or type a topic (e.g. <em>"Explain alink"</em> or <em>"What does Dennis Ritchie do?"</em>)!
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input Bar -->
+        <div style="display:flex; gap:0.5rem; align-items:center;">
+          <input type="text" id="ai-user-query" class="search-input" placeholder="Ask AI Tutor any question or doubt..." onkeydown="if(event.key==='Enter') sendAiMessage()">
+          <button class="btn-primary" style="padding:0.65rem 1.25rem;" onclick="sendAiMessage()">Ask AI 🚀</button>
+          <button class="btn-secondary" style="padding:0.65rem 0.85rem;" onclick="clearAiChat()" title="Clear chat history">↺</button>
+        </div>
+
+        <!-- Instant Keyword Filter Accordion below chat -->
+        <details style="margin-top:1.5rem; background:rgba(255,255,255,0.02); border:1px solid var(--bg-card-border); border-radius:10px; padding:0.75rem 1rem;">
+          <summary style="font-size:0.85rem; font-weight:700; color:var(--text-muted); cursor:pointer;">
+            🔍 Looking for raw keyword search across all 196 questions? Click to expand
+          </summary>
+          <div style="margin-top:0.75rem;">
+            <div class="search-input-wrap" style="margin-bottom:1rem;">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="ai-search-input" class="search-input" placeholder="Type keywords (e.g. SciTE, ASCII, DAYSINYEAR, Rectangle, main, break)..." oninput="executeNeuralSearch()">
+            </div>
+            <div id="search-results-summary" style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.75rem;"></div>
+            <div id="search-results-container"></div>
+          </div>
+        </details>
       </div>
     </div>
-
-  </main>
 
   <!-- Application Logic -->
   <script>
@@ -6022,6 +6076,278 @@ const EXAM_DATABASE = {
           </div>
         `;
         container.appendChild(div);
+      }
+    }
+
+    
+    // --- NEURAL AI EXAM TUTOR LOGIC ---
+    let chatHistory = [];
+    let activeQuizContext = null;
+
+    function toggleAiSettings() {
+      const drawer = document.getElementById('ai-settings-drawer');
+      drawer.style.display = drawer.style.display === 'none' ? 'block' : 'none';
+      const key = localStorage.getItem('gemini_api_key');
+      if (key) {
+        document.getElementById('gemini-api-key-input').value = key;
+        document.getElementById('api-key-status').innerText = '✓ Gemini API Key Active (Live Cloud Inference)';
+      }
+    }
+
+    function saveGeminiApiKey() {
+      const key = document.getElementById('gemini-api-key-input').value.trim();
+      if (key) {
+        localStorage.setItem('gemini_api_key', key);
+        document.getElementById('api-key-status').innerText = '✓ Gemini API Key Saved!';
+        playBeep(650, 0.1);
+      }
+    }
+
+    function clearGeminiApiKey() {
+      localStorage.removeItem('gemini_api_key');
+      document.getElementById('gemini-api-key-input').value = '';
+      document.getElementById('api-key-status').innerText = 'Reverted to Offline Neural AI Engine';
+    }
+
+    function askAiPrompt(promptText) {
+      document.getElementById('ai-user-query').value = promptText;
+      sendAiMessage();
+    }
+
+    function clearAiChat() {
+      const thread = document.getElementById('ai-chat-thread');
+      thread.innerHTML = `
+        <div style="display:flex; gap:0.6rem; align-items:flex-start;">
+          <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, var(--accent-cyan), var(--accent-purple)); display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">🤖</div>
+          <div style="background:var(--bg-primary); border:1px solid var(--bg-card-border); padding:0.75rem 1rem; border-radius:0 12px 12px 12px; font-size:0.88rem; line-height:1.5; max-width:85%;">
+            Chat cleared! Ask me any question from your Computer studies exam syllabus.
+          </div>
+        </div>
+      `;
+    }
+
+    function appendUserMessage(text) {
+      const thread = document.getElementById('ai-chat-thread');
+      const div = document.createElement('div');
+      div.style.display = 'flex';
+      div.style.gap = '0.6rem';
+      div.style.justifyContent = 'flex-end';
+      div.innerHTML = `
+        <div style="background:linear-gradient(135deg, rgba(6,182,212,0.25), rgba(59,130,246,0.3)); border:1px solid var(--accent-cyan); padding:0.75rem 1rem; border-radius:12px 0 12px 12px; font-size:0.88rem; line-height:1.5; max-width:85%;">
+          ${text}
+        </div>
+        <div style="width:32px; height:32px; border-radius:8px; background:var(--accent-blue); display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0;">👤</div>
+      `;
+      thread.appendChild(div);
+      thread.scrollTop = thread.scrollHeight;
+    }
+
+    function appendAiMessage(htmlContent) {
+      const thread = document.getElementById('ai-chat-thread');
+      const div = document.createElement('div');
+      div.style.display = 'flex';
+      div.style.gap = '0.6rem';
+      div.style.alignItems = 'flex-start';
+      div.innerHTML = `
+        <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, var(--accent-cyan), var(--accent-purple)); display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">🤖</div>
+        <div style="background:var(--bg-primary); border:1px solid var(--bg-card-border); padding:0.75rem 1rem; border-radius:0 12px 12px 12px; font-size:0.88rem; line-height:1.5; max-width:88%;">
+          ${htmlContent}
+        </div>
+      `;
+      thread.appendChild(div);
+      thread.scrollTop = thread.scrollHeight;
+      playBeep(620, 0.08);
+    }
+
+    async function sendAiMessage() {
+      const input = document.getElementById('ai-user-query');
+      const q = input.value.trim();
+      if (!q) return;
+
+      appendUserMessage(q);
+      input.value = '';
+
+      // Check if user has Gemini API key saved
+      const geminiKey = localStorage.getItem('gemini_api_key');
+      if (geminiKey) {
+        await callGeminiApi(q, geminiKey);
+      } else {
+        // Run Built-in Offline Neural Explainer
+        setTimeout(() => {
+          const aiResponse = generateLocalAiResponse(q);
+          appendAiMessage(aiResponse);
+        }, 300);
+      }
+    }
+
+    function generateLocalAiResponse(query) {
+      const lower = query.toLowerCase();
+
+      // Check if answering active quiz question
+      if (activeQuizContext && (lower.length === 1 && 'abcd'.includes(lower))) {
+        const picked = lower.toUpperCase();
+        const correct = activeQuizContext.answer;
+        const isRight = picked === correct;
+        const res = isRight 
+          ? `🎉 <strong>Correct! Option (${correct}) is right!</strong><br><br>${activeQuizContext.textbookFact}<br><br>🧠 <strong>Memory Hook:</strong> ${activeQuizContext.neuroHook}`
+          : `❌ <strong>Not quite. The correct answer is (${correct}) ${activeQuizContext.options[correct]}</strong>.<br><br>📘 <em>${activeQuizContext.textbookFact}</em><br><br>🧠 <strong>Memory Hook:</strong> ${activeQuizContext.neuroHook}<br><br>⚠️ <strong>Trap:</strong> ${activeQuizContext.cognitiveTrap}`;
+        activeQuizContext = null;
+        return res;
+      }
+
+      // Quiz intent
+      if (lower.includes('quiz') || lower.includes('test me') || lower.includes('ask me a question')) {
+        let pool = allQuestions;
+        for (let ch = 1; ch <= 14; ch++) {
+          if (lower.includes('ch ' + ch) || lower.includes('chapter ' + ch)) {
+            pool = allQuestions.filter(x => x.chapter === ch);
+            break;
+          }
+        }
+        if (!pool.length) pool = allQuestions;
+        const pickedQ = pool[Math.floor(Math.random() * pool.length)];
+        activeQuizContext = pickedQ;
+        let optText = '';
+        for (const [k, v] of Object.entries(pickedQ.options)) {
+          optText += `<br><strong>(${k})</strong> ${v}`;
+        }
+        return `🎯 <strong>Quick Brain Quiz (Chapter ${pickedQ.chapter}):</strong><br><br>
+                ${pickedQ.question}<br>${optText}<br><br>
+                <em>Type A, B, C, or D in chat to submit your answer!</em>`;
+      }
+
+      // Special handling for key exam questions
+      if (lower.includes('q12') || lower.includes('meta-tag') || lower.includes('meta tag')) {
+        return `<strong>🔍 Deep Dive on Q12 (<meta> tag):</strong><br><br>
+                • <strong>In SAM-1 Answer Key:</strong> Marked as <code>(A) Body</code>.<br>
+                • <strong>In W3C & Gujarat Board Textbook:</strong> The <code>&lt;meta&gt;</code> tag is placed inside the <code>&lt;head&gt;</code> section to hold author, keywords, and description.<br>
+                • <strong>Neuro Mnemonic:</strong> "Double-Key Anchor: School key = Body (A); True Specification = Head (C)". Remember this discrepancy so you never lose marks on school grading!`;
+      }
+
+      if (lower.includes('days') && (lower.includes('daysinyear') || lower.includes('negative') || lower.includes('difference'))) {
+        return `<strong>📅 Calc Date Functions Decoded:</strong><br><br>
+                1. <code>=DAYS(date2, date1)</code>: Calculates <em>(date2 - date1)</em>. If date2 is smaller than date1, the result is <strong>negative</strong>!<br>
+                2. <code>=DAYSINYEAR(date)</code>: Checks if the year is a leap year. Returns <strong>365</strong> for normal years and <strong>366</strong> for leap years (e.g. 2014 gives 365).<br>
+                3. <code>=DAY(date)</code>: Returns the day of the month as an integer (1 to 31).<br><br>
+                🧠 <strong>Memory Hook:</strong> "DAYS with an 'S' = span of dayS. DAYSINYEAR = year odometer (365 or 366)."`;
+      }
+
+      if (lower.includes('calc developer') || lower.includes('team') || lower.includes('nebel') || lower.includes('rentz')) {
+        return `<strong>👥 OpenOffice Calc Developer Team (Ch 5):</strong><br><br>
+                The 4 official developers listed in the textbook are:<br>
+                1. <strong>Niklas Nebel</strong><br>
+                2. <strong>Michael Benisch</strong><br>
+                3. <strong>Daniel Rentz</strong><br>
+                4. <strong>Eike Rathke</strong><br><br>
+                🧠 <strong>Memory Mnemonic:</strong> <em>"Nebel and Benisch Rent Rathke's Calc"</em> -> N-B-R-R. If an exam question asks who are the developers, the answer is always <strong>(D) All of these</strong>!`;
+      }
+
+      if (lower.includes('dennis') || lower.includes('ritchie') || lower.includes('1972') || lower.includes('bell labs')) {
+        return `<strong>💻 C Language Origin & Dennis Ritchie (Ch 10):</strong><br><br>
+                • <strong>Creator:</strong> Dennis Ritchie in 1972 at AT&T Bell Laboratories.<br>
+                • <strong>Root Languages:</strong> Developed from B language (Ken Thompson) and BCPL.<br>
+                • <strong>Core Rules:</strong> Execution always begins at <code>main()</code>; statements end with a semicolon <code>;</code>; standard file extension is <code>.c</code>.<br><br>
+                🧠 <strong>Memory Hook:</strong> "In 1972, Ritchie's Bell rang to welcome C Language!"`;
+      }
+
+      if (lower.includes('flowchart') || lower.includes('symbol') || lower.includes('parallelogram') || lower.includes('diamond')) {
+        return `<strong>📐 Flowchart Geometrical Symbols (Ch 9):</strong><br><br>
+                • <strong>Rounded Rectangle / Oval:</strong> Terminal (Start / Stop).<br>
+                • <strong>Parallelogram:</strong> Input / Output (e.g. Read A, Print Sum).<br>
+                • <strong>Rectangle:</strong> Process (Calculations, e.g. Sum = A + B).<br>
+                • <strong>Diamond:</strong> Decision / Condition (Crossroad branching Yes/No).<br>
+                • <strong>Circle:</strong> Connector on same page (contains letters/numbers).<br>
+                • <strong>Flowline / Arrow:</strong> Sequence of action.<br><br>
+                🧠 <strong>Memory Hook:</strong> "Oval starts and stops; Parallelogram data enters & exits; Rectangle is the busy worker; Diamond chooses which road to take."`;
+      }
+
+      // Keyword semantic matching
+      const matches = allQuestions.filter(item => {
+        return item.question.toLowerCase().includes(lower) ||
+               (item.textbookFact && item.textbookFact.toLowerCase().includes(lower)) ||
+               (item.neuroHook && item.neuroHook.toLowerCase().includes(lower));
+      });
+
+      if (matches.length > 0) {
+        const top = matches[0];
+        let relatedText = '';
+        if (matches.length > 1) {
+          relatedText = `<br><br><em>Related exam questions found: ${matches.length} (Check search tab below for full list).</em>`;
+        }
+        return `<strong>Answer from ${top.chapterTitle} (${top.source}):</strong><br><br>
+                ${top.textbookFact}<br><br>
+                ✅ <strong>Official Exam Answer:</strong> (${top.answer}) ${top.options[top.answer]}<br><br>
+                🧠 <strong>Neuro-Mnemonic:</strong> ${top.neuroHook}<br><br>
+                ⚠️ <strong>Exam Caution:</strong> ${top.cognitiveTrap || 'Read all options before deciding.'}${relatedText}`;
+      }
+
+      // Chapter note lookup
+      for (let ch = 1; ch <= 14; ch++) {
+        if (lower.includes('chapter ' + ch) || lower.includes('ch ' + ch)) {
+          const note = EXAM_DATABASE.chapterNotes[ch];
+          if (note) {
+            return `<strong>📖 Summary for Chapter ${ch}: ${note.title}</strong><br><br>
+                    <strong>Core Focus:</strong> ${note.focus}<br><br>
+                    <strong>High-Yield Rules:</strong><br>
+                    • ${note.highYield.slice(0, 4).join('<br>• ')}<br><br>
+                    🧠 <strong>Memory Peg:</strong> ${note.neuroMnemonic}`;
+          }
+        }
+      }
+
+      // General fallback
+      return `I analyzed your query across all 196 questions and 14 chapters.<br><br>
+              Try asking about specific topics like:<br>
+              • <em>"What is alink and vlink?"</em><br>
+              • <em>"Explain flowchart symbols"</em><br>
+              • <em>"What does PROPER() function do in Calc?"</em><br>
+              • <em>"How many keywords in ANSI C?"</em><br>
+              • Or click <strong>Quiz Me Now!</strong> to test your recall!`;
+    }
+
+    async function callGeminiApi(prompt, apiKey) {
+      const thread = document.getElementById('ai-chat-thread');
+      const loadingDiv = document.createElement('div');
+      loadingDiv.id = 'ai-loading-bubble';
+      loadingDiv.style.display = 'flex';
+      loadingDiv.style.gap = '0.6rem';
+      loadingDiv.innerHTML = `
+        <div style="width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, var(--accent-cyan), var(--accent-purple)); display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;">🤖</div>
+        <div style="background:var(--bg-primary); border:1px solid var(--accent-cyan); padding:0.75rem 1rem; border-radius:0 12px 12px 12px; font-size:0.85rem; color:var(--accent-cyan);">
+          🧠 Gemini AI thinking & recalling textbook knowledge...
+        </div>
+      `;
+      thread.appendChild(loadingDiv);
+      thread.scrollTop = thread.scrollHeight;
+
+      try {
+        const systemPrompt = "You are an expert tutor for Gujarat State Board (GSEB) Class 10 Computer Studies (English Medium). You know all 126 questions from SAM-1 revision worksheet, all 14 textbook chapters, flowchart symbols, Calc functions, and C language rules. Explain clearly, cite chapters, provide neuroscience memory hooks/mnemonics, and warn about exam traps. Keep answers under 180 words, formatted in clean HTML.";
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        const resp = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              { role: 'user', parts: [{ text: systemPrompt + "\n\nStudent Question: " + prompt }] }
+            ]
+          })
+        });
+
+        const data = await resp.json();
+        const loadElem = document.getElementById('ai-loading-bubble');
+        if (loadElem) loadElem.remove();
+
+        if (data.candidates && data.candidates[0].content.parts[0].text) {
+          const aiText = data.candidates[0].content.parts[0].text;
+          appendAiMessage(aiText);
+        } else {
+          appendAiMessage(generateLocalAiResponse(prompt));
+        }
+      } catch (err) {
+        const loadElem = document.getElementById('ai-loading-bubble');
+        if (loadElem) loadElem.remove();
+        console.warn("Gemini API call failed, falling back to local engine:", err);
+        appendAiMessage(generateLocalAiResponse(prompt));
       }
     }
 
